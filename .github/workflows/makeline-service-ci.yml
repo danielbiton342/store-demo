@@ -1,0 +1,37 @@
+name: Docker Image Makeline Service CI
+
+on:
+  push:
+    branches:
+      - $default-branch
+    paths:
+      - "makeline-service/."
+
+jobs:
+  build-and-push:
+    if: contains(github.event.head_commit.message, '[makeline-service-ci]')
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: makeline-service
+      TAG: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build . --file Dockerfile --tag $IMAGE_NAME:$TAG
+
+      - name: Run Unit Tests
+        run: |
+          docker run --rm $IMAGE_NAME:$TAG
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.AZURE_ACR_USERNAME }}.azurecr.io
+          username: ${{ secrets.AZURE_ACR_USERNAME }}
+          password: ${{ secrets.AZURE_ACR_PASSWORD }}
+
+      - name: Push Docker image to ACR
+        run: |
+          docker tag $IMAGE_NAME:$TAG ${{ secrets.AZURE_ACR_USERNAME }}.azurecr.io/$IMAGE_NAME:$TAG
+          docker push ${{ secrets.AZURE_ACR_USERNAME }}.azurecr.io/$IMAGE_NAME:$TAG

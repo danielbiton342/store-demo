@@ -1,24 +1,47 @@
-# Secure and Scalable Microservices Deployment on Azure AKS
+# **Secure and Scalable Microservices Deployment on Azure AKS**
 
-## Table of content
-....
+## **Table of Contents**
+- [**Secure and Scalable Microservices Deployment on Azure AKS**](#secure-and-scalable-microservices-deployment-on-azure-aks)
+  - [**Table of Contents**](#table-of-contents)
+  - [**Project Overview**](#project-overview)
+  - [**Application Architecture**](#application-architecture)
+  - [**Infrastructure Benefits**](#infrastructure-benefits)
+  - [**Setting Up the Infrastructure**](#setting-up-the-infrastructure)
+    - [**Terraform Configuration**](#terraform-configuration)
+    - [terraform.tfvars](#terraformtfvars)
+    - [Setting up the application](#setting-up-the-application)
+  - [Horizontal Pod Autoscaling](#horizontal-pod-autoscaling)
+- [Clean up](#clean-up)
 
 ---
-### short explanation about the application
-...
 
-### Application diagram
-![app](./photos/pic1.png)
+## **Project Overview**
+This project demonstrates the deployment of a secure and scalable microservices architecture on **Azure Kubernetes Service (AKS)**. It leverages best practices such as infrastructure-as-code (Terraform), container orchestration (AKS), and secure secret management with Azure Key Vault.
 
-### benefits of this infrastructure 
-......
+---
 
+## **Application Architecture**
+The application architecture is illustrated in the following diagram:  
+![Application Diagram](./photos/pic1.png)
 
-### Setting up the infrastructure
-first script for creating blob storage for the tfstate
-```bash
-./tf-state-setup.sh
-```
+---
+
+## **Infrastructure Benefits**
+- **Scalability**: Leverages Kubernetes' Horizontal Pod Autoscaler to handle dynamic traffic.
+- **Security**: Secure integration with Azure Key Vault for managing sensitive application secrets.
+- **Automation**: Terraform automates infrastructure provisioning and ensures consistency.
+- **Cost Efficiency**: Resources scale automatically based on demand, reducing over-provisioning.
+
+---
+
+## **Setting Up the Infrastructure**
+
+### **Terraform Configuration**
+1. **Blob Storage for Terraform State**  
+   Create a Blob Storage resource to manage Terraform state:  
+   ```bash
+   ./tf-state-setup.sh
+   ```
 
 ### terraform.tfvars
 create terraform.tfvars on terraform dir.
