@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.makelineService.name }}
+spec:
+  replicas: {{ .Values.makelineService.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.makelineService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.makelineService.name }}
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+        - name: {{ .Values.makelineService.name }}
+          image: "{{ .Values.makelineService.image.repository }}:{{ .Values.makelineService.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.makelineService.service.targetPort }}
+          env:
+            - name: ORDER_QUEUE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: retreiver-uri-secret
+                  key: kv-retreiver-uri
+            - name: ORDER_QUEUE_USERNAME
+              value: {{ .Values.makelineService.env.order_queue_username }}
+            - name: ORDER_QUEUE_PASSWORD_MAKELINE
+              valueFrom:
+                secretKeyRef:
+                  name: retreiver-password-secret
+                  key: kv-retreiver-password
+            - name: ORDER_QUEUE_NAME
+              value: "orders"
+            - name: ORDER_DB_URI
+              value: {{ .Values.makelineService.env.order_queue_db }}
+            - name: ORDER_DB_NAME
+              value: "orderdb"
+            - name: ORDER_DB_COLLECTION_NAME
+              value: "orders"
+          volumeMounts:
+            - name: secrets-store-inline
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+          resources:
+            requests:
+              cpu: 1m
+              memory: 6Mi
+            limits:
+              cpu: 5m
+              memory: 20Mi
+          startupProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.makelineService.service.targetPort }}
+            failureThreshold: 10
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.makelineService.service.targetPort }}
+            failureThreshold: 3
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.makelineService.service.targetPort }}
+            failureThreshold: 5
+            initialDelaySeconds: 3
+            periodSeconds: 3
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "sc-demo-keyvault-csi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.makelineService.name }}
+spec:
+  type: {{ .Values.makelineService.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.makelineService.service.port }}
+      targetPort: {{ .Values.makelineService.service.targetPort }}
+  selector:
+    app: {{ .Values.makelineService.name }}

@@ -18,5 +18,13 @@ This GitHub Actions workflow streamlines the application lifecycle by:
 - **Faster Deployments**: Prepares the application for deployment by pushing tested Docker images to ACR.
 - **Improved Collaboration**: Integrates and validates code changes seamlessly in a shared repository.
 
+## Show how the workflow works?
+Each time a developer will make new changes to a microservice, after testing it locally and making sure everything is smooth, pushing the new changes to the git repository will trigger the CI pipeline to work automatically (make sure to check the condition of commit message for each pipeline file).
+After the CI pipeline has updated the microservice image version, argocd will automatically within few minutes will see the changes and will deploy the new version of the specific image.
+
+
+
+
+
 
 

@@ -1,0 +1,9 @@
+apiVersion: v2
+name: aks-store-demo-chart
+description: A Helm chart for deploying the store-demo app to Kubernetes
+
+type: application
+
+version: 1.2.0
+
+appVersion: "1.16.0"

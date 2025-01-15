@@ -1,8 +1,9 @@
-# **Secure and Scalable Microservices Deployment on Azure AKS**
+# Secure, Scalable, and Asynchronous Microservices Deployment on Azure AKS
 
 ## **Table of Contents**
-- [**Secure and Scalable Microservices Deployment on Azure AKS**](#secure-and-scalable-microservices-deployment-on-azure-aks)
+- [Secure, Scalable, and Asynchronous Microservices Deployment on Azure AKS](#secure-scalable-and-asynchronous-microservices-deployment-on-azure-aks)
   - [**Table of Contents**](#table-of-contents)
+  - [**Prerequisites**](#prerequisites)
   - [**Project Overview**](#project-overview)
   - [**Application Architecture**](#application-architecture)
   - [**Infrastructure Benefits**](#infrastructure-benefits)
@@ -11,12 +12,32 @@
     - [terraform.tfvars](#terraformtfvars)
     - [Setting up the application](#setting-up-the-application)
   - [Horizontal Pod Autoscaling](#horizontal-pod-autoscaling)
+  - [](#)
+  - [**Automating application life-cycle with argocd (GitOps)**](#automating-application-life-cycle-with-argocd-gitops)
+    - [Set up](#set-up)
 - [Clean up](#clean-up)
+- [Best Practices](#best-practices)
 
 ---
+## **Prerequisites**
+Please make sure you have installed:
+- AZ CLI
+- Docker CLI
+- Kubernetes CLI
+- Terraform
+- Git
+And an active azure account.
 
 ## **Project Overview**
-This project demonstrates the deployment of a secure and scalable microservices architecture on **Azure Kubernetes Service (AKS)**. It leverages best practices such as infrastructure-as-code (Terraform), container orchestration (AKS), and secure secret management with Azure Key Vault.
+This project demonstrates the deployment of a secure and scalable microservices architecture on Azure Kubernetes Service (AKS). It leverages best practices such as infrastructure-as-code (Terraform), container orchestration (AKS), and secure secret management with Azure Key Vault.
+
+A key component of this architecture is Azure Service Bus, which facilitates reliable and asynchronous communication between microservices. By integrating Azure Service Bus into the application, the following benefits are achieved:
+
+Decoupling Services: Azure Service Bus allows microservices to communicate without tightly coupling them, enabling independent scaling, updates, and maintenance.
+Message Reliability: With features like message queues and topics, Service Bus ensures that messages are delivered even during transient network issues or service downtimes.
+Scalability: Service Bus handles large volumes of messages and supports high-throughput scenarios, aligning with the scalability of AKS.
+Enhanced Application Resilience: By using Service Bus dead-letter queues, undeliverable messages can be logged and processed later, preventing data loss and improving system reliability.
+This combination of AKS and Azure Service Bus creates a robust, scalable, and resilient environment for deploying modern microservices-based applications.
 
 ---
 
@@ -135,7 +156,24 @@ In case there is high traffic that a single pod cannot handle, we can use a powe
 kubectl apply -f aks-store-hpa.yaml
 ```
 ![hpa](./photos/pic5.png)
+---
+## **Automating application life-cycle with argocd (GitOps)**
+Instead of manually apply each time the k8s-config/aks-store.yaml file whenever we make new changes to the microservices images, we can automate this process using GitOps.
+GitOps is a declarative approach to continuous delivery where the entire system state is version controlled in Git. The desired system state is described in repository files, and automated processes ensure the actual state matches what's defined in Git.
 
+### Set up
+Please refer to argocd installation guide [Argocd installation](./argocd/).
+Now we will get a hold of the AKS server string:
+```bash
+kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}'
+```
+Replace the cluster server url in the file k8s-config/application.yaml:
+![app.yaml](./photos/pic6.png)
+
+After installing argocd apply application.yaml in k8s-config/application.yaml
+```bash
+kubectl apply -f k8s-config/application.yaml
+```
 
 # Clean up
 In order to clean up our resources we can run terraform destroy command:
@@ -147,3 +185,19 @@ Then remove the tfstate resource group
 ```bash
 az group delete --name tfstate --yes --no-wait
 ```
+---
+
+
+# Best Practices
+2 known practices are Monorepo and Polyrepo:
+**Monorepo**: All microservices are in a single repository.
+Pros: Easier to manage dependencies, enforce consistent tooling, easier refactoring across services.
+Cons: Can become unwieldy if there are too many microservices.
+
+**Polyrepo**: Each microservice has its own repository.
+Pros: Decentralized, each service can evolve independently, better scalability in teams.
+Cons: Dependency management across repos can be harder; requires tooling for integration.
+
+Best Practice: Start with a monorepo if you have a small to medium number of services. If the number of services grows significantly, consider transitioning to a polyrepo or a hybrid approach with service-specific repos.
+
+In my case for this project, i am using a single monorepo for the convenience of the readers. 

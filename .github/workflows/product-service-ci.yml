@@ -35,3 +35,24 @@ jobs:
         run: |
           docker tag $IMAGE_NAME:$TAG ${{ secrets.AZURE_ACR_USERNAME }}.azurecr.io/$IMAGE_NAME:$TAG
           docker push ${{ secrets.AZURE_ACR_USERNAME }}.azurecr.io/$IMAGE_NAME:$TAG
+
+      - name: git login
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          git config --global url."https://${GH_PAT}@github.com/".insteadOf "https://github.com/"
+
+      - name: Clone the target repository
+        run: git clone https://github.com/danielbiton342/store-demo.git target-repo
+
+      - name: Update Image Version
+        run: |
+          sed -i -E "/productService/ s/(tag: )([0-9]+)/\1$((\2 + 1))/g" target-repo/helm/values.yaml
+
+      - name: Push Changes
+        run: |
+          git add helm/values.yaml
+          git commit -m "New image version product-service"
+          git push

@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.orderService.name }}
+spec:
+  replicas: {{ .Values.orderService.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.orderService.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.orderService.name }}
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+        - name: {{ .Values.orderService.name }}
+          image: "{{ .Values.orderService.image.repository }}:{{ .Values.orderService.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.orderService.service.targetPort }}
+          env:
+            - name: ORDER_QUEUE_HOSTNAME
+              value: {{ .Values.orderService.env.order_queue_hostname }}
+            - name: ORDER_QUEUE_PORT
+              value: "5671"
+            - name: ORDER_QUEUE_TRANSPORT
+              value: "tls"
+            - name: ORDER_QUEUE_USERNAME
+              value: {{ .Values.orderService.env.order_queue_username }}
+            - name: ORDER_QUEUE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sender-password-secret
+                  key: kv-sender-password
+            - name: ORDER_QUEUE_NAME
+              value: "orders"
+            - name: FASTIFY_ADDRESS
+              value: "0.0.0.0"
+          volumeMounts:
+            - name: secrets-store-inline
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+          resources:
+            requests:
+              cpu: 1m
+              memory: 50Mi
+            limits:
+              cpu: 75m
+              memory: 128Mi
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "sc-demo-keyvault-csi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.orderService.name }}
+spec:
+  type: {{ .Values.orderService.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.orderService.service.port }}
+      targetPort: {{ .Values.orderService.service.targetPort }}
+  selector:
+    app: {{ .Values.orderService.name }}

@@ -1,0 +1,21 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+
+spec:
+  project: default
+  sources:
+    - repoURL: <your repository>
+      targetRevision: HEAD
+      path: ./helm
+  destination:
+    namespace: default
+    server: <server url>
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

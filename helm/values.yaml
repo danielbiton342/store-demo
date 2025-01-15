@@ -1,0 +1,66 @@
+orderService:
+  replicas: 1
+  name: order-service
+  image:
+    repository: <your repo>.azurecr.io/order-service
+    tag: 1
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  env:
+    order_queue_hostname: "sb-store-demo-114.servicebus.windows.net"
+    order_queue_username: "sender"
+
+productService:
+  replicas: 1
+  name: product-service
+  image:
+    repository: <your repo>.azurecr.io/product-service
+    tag: 1
+  service:
+    type: ClusterIP
+    port: 3002
+    targetPort: 3002
+
+storeFront:
+  name: store-front
+  replicas: 1
+  image:
+    repository: <your repo>.azurecr.io/store-front
+    tag: 1
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 8080
+  env:
+    app_order_service_url: "http://order-service:3000/"
+    app_product_service_url: "http://product-service:3002/"
+
+storeAdmin:
+  name: store-admin
+  replicas: 1
+  image:
+    repository: <your repo>.azurecr.io/store-admin
+    tag: 1
+  service:
+    type: LoadBalancer
+    port: 80
+    targetPort: 8081
+  env:
+    app_product_service_url: "http://product-service:3002/"
+    app_makeline_service_url: "http://makeline-service:3001/"
+
+makelineService:
+  name: makeline-service
+  replicas: 1
+  image:
+    repository: <your repo>.azurecr.io/makeline-service
+    tag: 1
+  service:
+    type: ClusterIP
+    port: 3001
+    targetPort: 3001
+  env:
+    order_queue_username: "retreiver"
+    order_queue_db: "mongodb://mongodb:27017"
